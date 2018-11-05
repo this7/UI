@@ -1,0 +1,214 @@
+<style lang="scss">
+    .rd-modal-mask {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background-color: #373737;
+    background-color: rgba(55,55,55,.6);
+    height: 100%;
+    z-index: 990;
+    filter: alpha(opacity=50);
+}
+.rd-modal-wrapper {
+    position: fixed;
+    overflow: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    -webkit-overflow-scrolling: touch;
+    outline: 0;
+}
+.rd-modal {
+    position: relative;
+    width: auto;
+    margin: 0 auto;
+    top: 100px;
+    width: 30rem;
+    background-color: #fff;
+    border-radius: .25rem;
+    &.large {
+        width: 45rem;
+    }
+}
+.rd-modal-header {
+    font-size: 1.2rem;
+    padding: 1rem 1rem;
+    border-bottom: 1px solid #f3f3f3;
+    color: #545454;
+}
+.rd-modal-body {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f3f3;
+    min-height: 7rem;
+}
+.rd-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: .5rem 1rem;
+}
+.rd-modal-footer .rd-btn {
+    margin-left: .5rem;
+}
+.rd-modal-header-close {
+    font-size: 1rem;
+    position: absolute;
+    right: 1rem;
+}
+@media screen and (max-width: 768px) {
+    .rd-modal {
+        width: 90%;
+    }
+    .rd-modal-body {
+        min-height: 4rem;
+    }
+}
+@keyframes modalFadeInDown {
+  from {
+    opacity: 0;
+    -webkit-transform: translate3d(0, -50%, 0);
+    transform: translate3d(0, -50%, 0);
+  }
+
+  to {
+    opacity: 1;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes modalFadeOutUp {
+  from {
+    opacity: 1;
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    opacity: 0;
+    -webkit-transform: translate3d(0, -50%, 0);
+    transform: translate3d(0, -50%, 0);
+  }
+}
+.modal-fade-in-down-transition {
+  animation-duration: .2s;
+  animation-fill-mode: both;
+}
+.modal-fade-in-down-enter {
+    animation-name: modalFadeInDown;
+}
+.modal-fade-in-down-leave {
+    animation-name: modalFadeOutUp;
+}
+</style>
+<template>
+    <div class="rd-modal-container" v-show="modal.show">
+        <div class="rd-modal-mask"></div>
+        <div class="rd-modal-wrapper" @click="touchClose">
+            <div class="rd-modal" v-show="modal.show" transition="modal-fade-in-down" :class="{'large': modal.large }">
+                <div class="rd-modal-header">
+                    <i
+                        class="rd-modal-header-close ion-close-round"
+                        @click="cancel"
+                    ></i>
+                    <span class="rd-modal-title">
+                        {{modal.title}}
+                    </span>
+                </div>
+                <div class="rd-modal-body" v-if="!modal.rawContent">
+                    {{modal.content}}
+                </div>
+                <div class="rd-modal-body" v-else v-html="modal.rawContent">
+                </div>
+                <div class="rd-modal-footer">
+                    <v-button v-show="modal.cancelButton.show" :type="modal.cancelButton.type" @click="cancel">{{modal.cancelButton.text}}</v-button>
+                    <v-button v-show="modal.confirmButton.show" :type="modal.confirmButton.type" @click="confirm">{{modal.confirmButton.text}}</v-button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+<script type="text/javascript">
+export default {
+    props: {
+        modal: {
+            type: Object,
+            default: []
+        }
+    },
+    data() {
+        return {
+            $modal: null
+        }
+    },
+    methods: {
+        touchClose(e) {
+            this.cancel()
+        },
+        cancel(e) {
+            this.modal.show = false
+        },
+        confirm(e) {
+            if (this.modal.confirm) {
+                this.modal.confirm()
+            }
+            this.modal.show = false
+        }
+    }
+}
+Vue.prototype.$Modal = {
+    root: null,
+    create(title, text, confirm, cancel, rawHTML, { cancelButton, confirmButton, large }) {
+        var data = {
+            show: true,
+            title: title,
+            content: text,
+            rawContent: rawHTML,
+            cancel: cancel,
+            confirm: confirm,
+            large: large || false,
+            cancelButton: cancelButton || {
+                show: true,
+                type: '',
+                text: '取消'
+            },
+            confirmButton: confirmButton || {
+                show: true,
+                type: 'primary',
+                text: '确定'
+            }
+        }
+        if (this.root == null) {
+            var unique = "this7_"+hex_md5("$Modal");
+            var authorEle = document.createElement("div");
+            authorEle.setAttribute("ID", unique);
+            document.body.appendChild(authorEle);
+            this.root = new modal({ propsData: { modal: data } }).$mount("#" + unique);
+        } else {
+            this.root.modal = data;
+        }
+    },
+    clear() {
+        this.root.modal.show = false;
+    },
+    confirm(title, text, confirm, cancel, options = {}) {
+        this.create(title, text, confirm, cancel, '', options)
+    },
+    confirmWithHTML(title, rawHTML, confirm, cancel, options = {}) {
+        this.create(title, '', confirm, cancel, rawHTML, options)
+    }
+}
+</script>
+<script type="text/json">
+{
+    "components": {
+        "v-button": "components/this7/base/button"
+    },
+    "style": [
+        "components/this7/reset.css",
+        "components/this7/icon.css"
+    ]
+}
+</script>

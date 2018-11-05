@@ -1,0 +1,910 @@
+<template>
+    <div class="this7-tailor">
+        <div class="tailor__images" @click="upload()">
+            <img :src="value" width="100%">
+        </div>
+        <div class="tailor__shade" v-show="is_show"></div>
+        <div class="tailor__layer" v-show="is_show">
+            <div class="header">
+                修改头像
+            </div>
+            <div class="body">
+                <div class="alert"><strong>Tips：</strong>移动：拖拽剪裁之外（暗色遮罩）区域；缩放：鼠标滚轮；</div>
+                <div class="edit_area">
+                    <div class="crop_area">
+                        <div class="cropper-container cropper-bg" style="width: 410px; height: 360px;">
+                            <img :src="url" id="img1" />
+                            <div class="shade"></div>
+                            <img :src="url" ref="mybox" id="img2" />
+                            <div id="main">
+                                <div class="main-box" @mousedown="move" @mousewheel='paperScroll'></div>
+                                <div class="Divmin up-left" @mousedown="leftTop"></div>
+                                <div class="Divmin up" @mousedown="top"></div>
+                                <div class="Divmin up-right" @mousedown="rightTop"></div>
+                                <div class="Divmin right" @mousedown="right"></div>
+                                <div class="Divmin right-down" @mousedown="rightBottom"></div>
+                                <div class="Divmin down" @mousedown="bottom"></div>
+                                <div class="Divmin left-down" @mousedown="leftBottom"></div>
+                                <div class="Divmin left" @mousedown="left"></div>
+                            </div>
+                        </div>
+                        <div class="avatar_crop_area">
+                            <button class="button">
+                                <svg viewBox="0 0 1024 1024">
+                                    <path d="M651.84 882.384c-47.28 19.584-99.008 30.512-153.36 30.512C277.072 912.912 97.552 733.424 97.552 512c0-52.384 10.256-102.32 28.512-148.176l60.304 36.96c15.008 9.2 26.8 2.336 26.176-15.248l-6.336-179.744c-0.624-17.584-14.208-25.904-30.16-18.48L12.96 263.2c-15.936 7.424-16.72 21.024-1.712 30.224l57.056 34.992C44.208 384.8 30.752 446.816 30.752 512c0 258.336 209.424 467.728 467.696 467.728 73.12 0 142.336-16.816 203.968-46.72 0 0 31.056-25.776 7.088-52.672C691.408 860 651.84 882.384 651.84 882.384zM1010.416 692.528l-69.456-28.96c16.304-47.552 25.264-98.512 25.264-151.584 0-258.336-209.44-467.728-467.728-467.728-73.104 0-142.304 16.816-203.936 46.72 0 0-28.768 21.088-9.488 47.984 16.528 23.136 60.064 2.656 60.064 2.656 47.248-19.584 99.008-30.512 153.344-30.512 221.44 0 400.928 179.472 400.928 400.896 0 43.968-7.264 86.192-20.368 125.744l-58.288-24.304c-16.24-6.784-26.816 1.824-23.488 19.104l34.016 176.624c3.328 17.28 18.016 23.408 32.624 13.616l149.472-100.144C1027.984 712.88 1026.656 699.312 1010.416 692.528z"></path>
+                                </svg>
+                            </button>
+                            <div class="button">
+                                <input type="file" @change="tirggerFile($event)" accept="image/png,image/jpeg,image/gif,image/jpg">
+                                <svg viewBox="0 0 1024 1024">
+                                    <path d="M992 953.6H32c-19.2 0-32-12.8-32-32v-275.2c0-19.2 12.8-32 32-32s32 12.8 32 32v236.8h889.6v-236.8c0-19.2 12.8-32 32-32s32 12.8 32 32v275.2c6.4 19.2-6.4 32-25.6 32z m-300.8-588.8L544 192v524.8c0 19.2-12.8 32-32 32s-32-12.8-32-32V192L332.8 364.8c-12.8 12.8-38.4 12.8-51.2 0-12.8-12.8-12.8-38.4 0-51.2l204.8-236.8c6.4-6.4 19.2-6.4 25.6-6.4 6.4 0 19.2 6.4 19.2 6.4l204.8 236.8c12.8 12.8 12.8 38.4 0 51.2-6.4 12.8-32 12.8-44.8 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview_area">
+                        <div class="preview_big">
+                            <div class="preview_show cropper-bg" style="width: 200px; height:200px;" ref="preview200"></div>
+                            <span>200 x 200</span>
+                        </div>
+                        <div class="preview_middle">
+                            <div class="preview_show cropper-bg" style="width: 100px; height:100px;" ref="preview100"></div>
+                            <span>100 x 100</span>
+                        </div>
+                        <div class="preview_small">
+                            <div class="preview_show cropper-bg" style="width: 60px; height:60px;" ref="preview60"></div>
+                            <span>60 x 60</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer">
+                <button type="button" @click="cancelImg">取消</button>
+                <button type="button" @click="submitImg">应用此头像</button>
+            </div>
+        </div>
+    </div>
+</template>
+<script type="text/javascript">
+export default {
+    data() {
+        return {
+            version: "v0.0.1",
+            is_show: false,
+            formData: new FormData(),
+            imgs: {},
+            imgLen: 0,
+            url: '',
+            width: 0,
+            height: 0,
+            scale: 1,
+            main: {
+                width: 410,
+                height: 360
+            },
+            code: {
+                name: '',
+                data: '',
+                width: 0,
+                height: 0,
+                zoom: 1,
+                type: '',
+                size: '',
+                tailor: {
+                    width: 200,
+                    height: 200,
+                    x: 0,
+                    y: 0
+                },
+                variety: [
+                    [200, 200],
+                    [100, 100],
+                    [60, 60]
+                ]
+            }
+        }
+    },
+    props: {
+        value: {
+            type: String,
+            default: ''
+        }
+    },
+    mounted() {
+
+    },
+    methods: {
+        upload() {
+            this.is_show = true;
+        },
+        tirggerFile(event) {
+            var file = event.target.files;
+
+            this.code.name = file[0].name;
+            this.code.size = file[0].size;
+            this.code.type = file[0].type;
+            this.code.data = file[0].type;
+
+            this.url = this.getObjectURL(file[0]);
+            // 创建对象
+            var img = new Image();
+
+
+            // 改变图片的src
+            img.src = this.url;
+            img.onload = function() {
+                images([img.width, img.height]);
+            }
+
+            var that = this;
+            var images = function(e) {
+                that.code.width = e[0];
+                that.code.height = e[1];
+                that.code.data = that.getBase64Image(img);
+                //设置缩放
+                var scale = that.getScale(e[0], e[1], 410, 360);
+                //设置参数
+                that.code.zoom = scale.scale;
+                that.width = scale.w;
+                that.height = scale.h;
+                that.scale = scale.scale;
+            }
+        },
+        cancelImg() {
+            that.is_show = false;
+        },
+        submitImg() {
+            var url = host + "/system/images/pictureUpload";
+            var images = this.code;
+            var that = this;
+            client.ajax({
+                url: url,
+                method: 'POST',
+                data: images,
+                error: function(e) {
+                    //返回报错内容
+                    console.log(e)
+                },
+                success: function(e) {
+                    //接口返回的内容
+                    if (e.code === 0) {
+                        that.is_show = false;
+                        that.$emit('click', e.data);
+                        that.$emit('input', e.data);
+                    } else {
+                        console.log(e)
+                    }
+                }
+            });
+
+        },
+        /* 
+         * 获取缩放比例 
+         * 
+         * 原始宽高vw,vh
+         * 实际显示宽高sw,sh
+         * 返回：
+         * {w,h,scale:max(sw/vw,sh/vh)}
+         * w,h均为缩放到sw、sh后的宽高
+         */
+        getScale(vw, vh, sw, sh, db = true) {
+            vw = Number(vw);
+            vh = Number(vh);
+            sw = Number(sw);
+            sh = Number(sh);
+            if (vw <= 0 || vh <= 0) {
+                console.log('参数不能为0');
+                return false;
+            }
+
+            if (db) {
+                var wScale = sw / vw;
+                var hScale = sh / vh;
+            } else {
+                var wScale = vw / sw;
+                var hScale = vh / sh;
+            }
+
+
+            var scale = 1,
+                w, h;
+
+            if (wScale > hScale) {
+                scale = hScale;
+                h = sh;
+                w = vw * scale;
+            } else {
+                scale = wScale;
+                w = sw;
+                h = vh * scale;
+            }
+
+            return {
+                scale: scale,
+                w: w,
+                h: h
+            };
+        },
+        getObjectURL(file) {
+            var url = null;
+            if (window.createObjectURL != undefined) { // basic
+                url = window.createObjectURL(file);
+            } else if (window.URL != undefined) { // mozilla(firefox)
+                url = window.URL.createObjectURL(file);
+            } else if (window.webkitURL != undefined) { // webkit or chrome
+                url = window.webkitURL.createObjectURL(file);
+            }
+            return url;
+        },
+        getBase64Image(img) {
+            var canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            var ext = img.src.substring(img.src.lastIndexOf(".") + 1).toLowerCase();
+            var dataURL = canvas.toDataURL("image/" + ext);
+            return dataURL;
+        },
+        paperScroll(e) {
+            console.log(e);
+        },
+        move(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //算出鼠标相对元素的位置
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let disX = e.clientX - odiv.offsetLeft;
+            let disY = e.clientY - odiv.offsetTop;
+            document.onmousemove = (e) => { //鼠标按下并移动的事件
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+                let top = e.clientY - disY;
+
+                if (left < 0) {
+                    left = 0;
+                }
+                if (top < 0) {
+                    top = 0;
+                }
+
+                if (left > (this.main.width - RawW)) {
+                    left = this.main.width - RawW;
+                }
+
+                if (top > (this.main.height - RawH)) {
+                    top = this.main.height - RawH;
+                }
+
+                //绑定元素位置到positionX和positionY上面
+                this.positionX = top;
+                this.positionY = left;
+
+                //移动当前元素
+                odiv.style.left = left + 'px';
+                odiv.style.top = top + 'px';
+                this.setImages(top, left, RawW, RawH, RawW, RawH);
+
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        top(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let top = e.clientY - disY;
+
+                let y = top - RawY;
+
+                let left = RawX + y / 2;
+
+                //判断区域性
+                if (top < 0 || left < 0) {
+                    return;
+                }
+
+                let width = Number(RawW) - Number(y)
+                let height = Number(RawH) - Number(y);
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                odiv.style.left = left + 'px';
+                odiv.style.top = top + 'px';
+                this.setImages(top, left, width, height, RawW, RawH);
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        right(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+
+                let x = left - RawX;
+
+                let top = RawY - x / 2;
+
+                //判断区域性
+                if (top < 0) {
+                    return;
+                }
+
+
+                let y = top - RawY;
+                let width = Number(RawW) + Number(x)
+                let height = Number(RawH) + Number(x);
+
+
+                //判断选择区域
+                if ((this.main.width < (width + RawX)) || (this.main.height < (RawY + height))) {
+                    return;
+                }
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                odiv.style.top = top + 'px';
+                this.setImages(top, RawX, width, height, RawW, RawH);
+
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        bottom(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let top = e.clientY - disY;
+
+                let y = top - RawY;
+
+                let left = RawX - y / 2;
+
+                //判断区域性
+                if (top < 0 || left < 0) {
+                    return;
+                }
+
+
+                let width = Number(RawW) + Number(y)
+                let height = Number(RawH) + Number(y);
+
+                if ((this.main.width < (width + RawX)) || (this.main.height < (RawY + height))) {
+                    return;
+                }
+
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                odiv.style.left = left + 'px';
+                this.setImages(RawY, left, width, height, RawW, RawH);
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        left(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+
+                let x = left - RawX;
+
+                let top = RawY + x / 2;
+
+                //判断区域性
+                if (top < 0 || left < 0) {
+                    return;
+                }
+
+                let width = Number(RawW) - Number(x)
+                let height = Number(RawH) - Number(x);
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                odiv.style.left = left + 'px';
+                odiv.style.top = top + 'px';
+                this.setImages(top, left, width, height, RawW, RawH);
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        leftTop(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+
+                let x = left - RawX;
+
+                let top = RawY + x;
+
+                //判断区域性
+                if (top < 0 || left < 0) {
+                    return;
+                }
+
+                let width = Number(RawW) - Number(x)
+                let height = Number(RawH) - Number(x);
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                odiv.style.left = left + 'px';
+                odiv.style.top = top + 'px';
+                this.setImages(top, left, width, height, RawW, RawH);
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        rightTop(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+
+                let x = left - RawX;
+
+                let top = RawY - x;
+
+                //判断区域性
+                if (top < 0 || left < 0) {
+                    return;
+                }
+
+                let y = top - RawY;
+                let width = Number(RawW) + Number(x)
+                let height = Number(RawH) + Number(x);
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                odiv.style.top = top + 'px';
+                this.setImages(top, RawX, width, height, RawW, RawH);
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+
+        },
+        leftBottom(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+
+                let x = left - RawX;
+
+                //判断区域性
+                if (left < 0) {
+                    return;
+                }
+
+                let width = Number(RawW) - Number(x)
+                let height = Number(RawH) - Number(x);
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                odiv.style.left = left + 'px';
+                this.setImages(RawY, left, width, height, RawW, RawH);
+
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        rightBottom(e) {
+            let odiv = e.target.parentNode; //获取目标元素
+            //元素初始信息
+            let RawW = odiv.offsetWidth;
+            let RawH = odiv.offsetHeight;
+            let RawX = odiv.offsetLeft;
+            let RawY = odiv.offsetTop;
+            //算出鼠标相对元素的位置
+            let disX = e.clientX - RawX;
+            let disY = e.clientY - RawY;
+            //鼠标按下并移动的事件
+            document.onmousemove = (e) => {
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+                let top = e.clientY - disY;
+
+                let x = left - RawX;
+                let y = top - RawY;
+                let width = Number(RawW) + Number(x)
+                let height = Number(RawH) + Number(x);
+
+                if ((this.main.width < (width + RawX)) || (this.main.height < (RawY + height))) {
+                    return;
+                }
+
+                odiv.style.width = width + 'px';
+                odiv.style.height = height + 'px';
+                this.setImages(RawY, RawX, width, height, RawW, RawH);
+            };
+            document.onmouseup = (e) => {
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        setImages(top, left, width, height, yw, yh) {
+            //存储数据
+            this.code.tailor.width = width;
+            this.code.tailor.height = height;
+            this.code.tailor.x = left;
+            this.code.tailor.y = top;
+            //设置移动
+            let right = left + width;
+            let bottom = top + height;
+            this.$refs.mybox.style.clip = "rect(" + top + "px," + right + "px," + bottom + "px," + left + "px)";
+
+            let w1 = 200 / (width / this.width);
+            let h1 = 200 / (height / this.height);
+            let x1 = (left / this.width) * w1;
+            let y1 = (top / this.height) * h1;
+            this.$refs.preview200.style['background'] = "url(" + this.url + ")";
+            this.$refs.preview200.style['background-size'] = w1 + "px " + h1 + "px";
+            this.$refs.preview200.style['background-position'] = "-" + x1 + "px -" + y1 + "px";
+
+            let w2 = 100 / (width / this.width);
+            let h2 = 100 / (height / this.height);
+            let x2 = (left / this.width) * w2;
+            let y2 = (top / this.height) * h2;
+            this.$refs.preview100.style['background'] = "url(" + this.url + ")";
+            this.$refs.preview100.style['background-size'] = w2 + "px " + h2 + "px";
+            this.$refs.preview100.style['background-position'] = "-" + x2 + "px -" + y2 + "px";
+
+            let w3 = 60 / (width / this.width);
+            let h3 = 60 / (height / this.height);
+            let x3 = (left / this.width) * w3;
+            let y3 = (top / this.height) * h3;
+            this.$refs.preview60.style['background'] = "url(" + this.url + ")";
+            this.$refs.preview60.style['background-size'] = w3 + "px " + h3 + "px";
+            this.$refs.preview60.style['background-position'] = "-" + x3 + "px -" + y3 + "px";
+        },
+        resize(resizeValue) {
+            avatorImg.style.width = (resizeValue + 100) / 100 * initLength.width + 'px';
+            avatorImg.style.height = (resizeValue + 100) / 100 * initLength.height + 'px';
+        }
+
+    }
+}
+</script>
+<style type="text/css" lang="less">
+.tailor__shade {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, .5);
+    z-index: 9999998;
+    left: 0;
+    top: 0;
+}
+
+.tailor__layer {
+    position: fixed;
+    width: 660px;
+    height: 580px;
+    left: 50%;
+    top: 50%;
+    margin-left: -330px;
+    margin-top: -290px;
+    z-index: 9999999;
+    background-color: #fff;
+    border-radius: .1875rem;
+    .body {
+        padding: .9375rem;
+    }
+    .footer {
+        margin-top: 0;
+        padding: 0;
+        height: 3.1875rem;
+        border-top: .0625rem #ececec solid;
+        overflow: hidden;
+        position: relative;
+        button {
+            color: #666;
+            width: 50%;
+            height: 3.125rem;
+            border: 0 none!important;
+            border-left: .0625rem #ececec solid!important;
+            border-radius: 0!important;
+            outline: none;
+        }
+        button:first-child {
+            border: 0 none!important;
+        }
+    }
+    .header {
+        padding: .625rem 1.25rem .3125rem 1.25rem;
+        border: 0 none;
+        z-index: 2;
+        position: relative;
+    }
+    .alert {
+        position: relative;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: .0625rem solid transparent;
+        border-radius: 0.25rem;
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+    }
+    .edit_area {
+
+        min-height: 25rem;
+        position: relative;
+        .cropper-bg {
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA3NCSVQICAjb4U/gAAAABlBMVEXMzMz////TjRV2AAAACXBIWXMAAArrAAAK6wGCiw1aAAAAHHRFWHRTb2Z0d2FyZQBBZG9iZSBGaXJld29ya3MgQ1M26LyyjAAAABFJREFUCJlj+M/AgBVhF/0PAH6/D/HkDxOGAAAAAElFTkSuQmCC');
+        }
+        .crop_area {
+            left: 0;
+            right: 13.125rem;
+            .cropper-container {
+                font-size: 0;
+                line-height: 0;
+                position: relative;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                direction: ltr;
+                -ms-touch-action: none;
+                touch-action: none;
+            }
+        }
+        .avatar_crop_area {
+            left: 0;
+            right: 13.125rem;
+            .button {
+                position: relative;
+                display: inline-block;
+                width: 205px;
+                font-weight: 400;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: middle;
+                padding: .5rem 0;
+                height: 2.5rem;
+                border: 0 none;
+                border-radius: 0;
+                background: #ececec;
+                font-size: .875rem;
+                color: #666;
+                outline: none;
+                svg {
+                    margin: 0 auto;
+                    width: 1.5rem;
+                    height: 1.5rem;
+                }
+                input {
+                    position: absolute;
+                    width: 100%;
+                    font-size: 24px;
+                    right: 0;
+                    top: 0;
+                    opacity: 0;
+                    filter: alpha(opacity=0);
+                    cursor: pointer
+                }
+            }
+            .button:first-child {
+                border-bottom-left-radius: .25rem;
+            }
+            .button:last-child {
+                border-bottom-right-radius: .25rem;
+                border-left: 0 none;
+            }
+        }
+        .preview_area {
+            right: 0;
+            padding: 0;
+            height: 25rem;
+            top: 0;
+            bottom: 0;
+            z-index: 1;
+            position: absolute;
+            .preview_big {
+                position: relative;
+                margin-bottom: 1.25rem;
+                width: 12.5rem;
+                height: 14.375rem;
+            }
+            .preview_middle {
+                width: 6.25rem;
+                height: 8.125rem;
+                float: left;
+                position: relative;
+            }
+            .preview_small {
+                position: relative;
+                padding: 0rem 1.25rem 3.125rem;
+                width: 6.25rem;
+                height: 8.125rem;
+                float: left;
+            }
+        }
+    }
+}
+
+
+
+
+#img1,
+#img2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 360px;
+    width: auto;
+}
+
+.shade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    opacity: 0.3;
+}
+
+#img2 {
+    clip: rect(0, 200px, 200px, 0);
+}
+
+#main {
+    position: absolute;
+    /*第三层需用绝对定位浮在上面*/
+    width: 200px;
+    height: 200px;
+    border: 1px solid #fff;
+    z-index: 9999999;
+    cursor: pointer;
+}
+
+.main-box {
+    width: 100%;
+    height: 100%;
+}
+
+.Divmin {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+}
+
+.up-left {
+    margin-top: -4px;
+    margin-left: -4px;
+    cursor: nw-resize;
+    top: 0;
+    left: 0;
+}
+
+.up {
+    left: 50%;
+    /*父元素盒子main宽度的一半，注意要有绝对定位*/
+    margin-left: -4px;
+    top: -4px;
+    cursor: n-resize;
+}
+
+.up-right {
+    top: -4px;
+    right: -4px;
+    cursor: ne-resize;
+}
+
+.right {
+    top: 50%;
+    margin-top: -4px;
+    right: -4px;
+    cursor: e-resize;
+}
+
+.right-down {
+    right: -4px;
+    bottom: -4px;
+    cursor: se-resize;
+}
+
+.down {
+    bottom: -4px;
+    left: 50%;
+    margin-left: -4px;
+    cursor: s-resize;
+}
+
+.left-down {
+    left: -4px;
+    bottom: -4px;
+    cursor: sw-resize;
+}
+
+.left {
+    left: -4px;
+    top: 50%;
+    margin-top: -4px;
+    cursor: w-resize;
+}
+</style>

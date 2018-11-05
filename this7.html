@@ -1,0 +1,36 @@
+<template>
+    <div class="this7">
+        <h2>This7生态-1</h2>
+        <p>
+            安装方法：composer create-project this7/app blog --prefer-dist
+        </p>
+        <div id="nihaoa">nihao</div>
+    </div>
+</template>
+<style type="text/css" scoped="true">
+* {
+    margin: 0;
+    padding: 0
+}
+
+.this7 p span {
+    width: 100px;
+}
+
+#nihaoa {
+    width: 100px;
+    height: 200px;
+    background-color: #ccc;
+}
+</style>
+<script type="text/javascript">
+export default {
+    name: 'this7',
+    props: ["name", "age"],
+    data: function() {
+        return {
+            count: 0
+        }
+    }
+}
+</script>
